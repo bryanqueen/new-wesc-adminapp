@@ -6,8 +6,10 @@ import { cookies } from 'next/headers'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
+  
   try {
     await dbConnect()
     const blog = await Blog.findById(params.id).populate('author', 'username')
@@ -25,8 +27,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
+  
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
@@ -61,8 +65,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
+  
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
