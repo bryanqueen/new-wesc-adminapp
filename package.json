@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "ESLINT_CONFIG_FILE=.eslintrc.vercel.js next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "ESLINT_CONFIG_FILE=.eslintrc.vercel.js next lint"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
