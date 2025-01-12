@@ -6,12 +6,11 @@ import { cookies } from 'next/headers'
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await context.params
   try {
     await dbConnect()
-    const programme = await Programme.findById(id).populate('author', 'username')
+    const programme = await Programme.findById(params.id).populate('author', 'username')
 
     if (!programme) {
       return NextResponse.json({ error: 'Programme not found' }, { status: 404 })
@@ -26,9 +25,8 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await context.params
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
@@ -41,14 +39,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const { title, description, coverImage, content, form } = await request.json()
-
+    const updates = await request.json()
+    
     await dbConnect()
     const programme = await Programme.findByIdAndUpdate(
-      id,
-      { title, description, coverImage, content, form, updatedAt: new Date() },
+      params.id,
+      { 
+        ...updates,
+        updatedAt: new Date() 
+      },
       { new: true }
-    )
+    ).populate('author', 'username')
 
     if (!programme) {
       return NextResponse.json({ error: 'Programme not found' }, { status: 404 })
@@ -63,9 +64,8 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await context.params
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
@@ -79,7 +79,7 @@ export async function DELETE(
     }
 
     await dbConnect()
-    const programme = await Programme.findByIdAndDelete(id)
+    const programme = await Programme.findByIdAndDelete(params.id)
 
     if (!programme) {
       return NextResponse.json({ error: 'Programme not found' }, { status: 404 })
@@ -91,4 +91,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
