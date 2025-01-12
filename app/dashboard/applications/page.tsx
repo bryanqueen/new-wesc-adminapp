@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { toast } from "sonner"
-import { useAuth } from "@/hooks/useAuth"
+import { toast } from "@/hooks/use-toast"
 import { DashboardLayout } from "@/components/dashboard/layout"
 
 interface Application {
@@ -74,7 +73,11 @@ export default function ApplicationsPage() {
       setGroupedApplications(grouped)
     } catch (error) {
       console.error('Error fetching applications:', error)
-      toast.error('Failed to load applications')
+      toast({
+        title: 'Failed to load applications',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      })
     } finally {
         setIsLoading(false)
       }

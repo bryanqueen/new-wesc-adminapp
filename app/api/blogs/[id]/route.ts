@@ -4,13 +4,19 @@ import Blog from '@/models/Blog'
 import { verifyToken } from '@/lib/auth'
 import { cookies } from 'next/headers'
 
+interface RequestContext {
+  params: {
+    id: string;
+  };
+}
+
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: RequestContext
 ) {
   try {
     await dbConnect()
-    const blog = await Blog.findById(params.id).populate('author', 'username')
+    const blog = await Blog.findById(context.params.id).populate('author', 'username')
 
     if (!blog) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 })
@@ -25,7 +31,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: RequestContext
 ) {
   try {
     const cookieStore = await cookies()
@@ -43,7 +49,7 @@ export async function PUT(
 
     await dbConnect()
     const blog = await Blog.findByIdAndUpdate(
-      params.id,
+      context.params.id,
       { title, content, updatedAt: new Date() },
       { new: true }
     )
@@ -61,7 +67,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: RequestContext
 ) {
   try {
     const cookieStore = await cookies()
@@ -76,7 +82,7 @@ export async function DELETE(
     }
 
     await dbConnect()
-    const blog = await Blog.findByIdAndDelete(params.id)
+    const blog = await Blog.findByIdAndDelete(context.params.id)
 
     if (!blog) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 })
@@ -88,4 +94,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

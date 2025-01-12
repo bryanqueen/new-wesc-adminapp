@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
+import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/useAuth"
 
 interface Application {
@@ -42,7 +42,11 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
       setApplication(data)
     } catch (error) {
       console.error('Error fetching application details:', error)
-      toast.error('Failed to load application details')
+      toast({
+        title: 'Failed to load application details',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      })
     } finally {
       setIsLoading(false)
     }

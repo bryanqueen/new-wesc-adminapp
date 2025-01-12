@@ -19,7 +19,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export default function EditProgrammePage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function EditProgrammePage({ params }: PageProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const [programme, setProgramme] = React.useState<any>(null);
@@ -27,7 +33,7 @@ export default function EditProgrammePage({ params }: { params: { id: string } }
   const [showUnsavedChanges, setShowUnsavedChanges] = React.useState(false);
   const [isDirty, setIsDirty] = React.useState(false);
 
-  const id = React.use(params).id;
+  const { id } = params;
 
   // Fetch programme data
   React.useEffect(() => {
@@ -80,7 +86,7 @@ export default function EditProgrammePage({ params }: { params: { id: string } }
         title: "Success",
         description: "Programme updated successfully",
       });
-      router.refresh();
+      router.push('/dashboard/programmes');
     } catch (error) {
       console.error('Error updating programme:', error);
       toast({
@@ -98,6 +104,11 @@ export default function EditProgrammePage({ params }: { params: { id: string } }
     // Compare with original state to determine if changes were made
     setIsDirty(JSON.stringify(newData) !== originalProgramme);
     return Promise.resolve();
+  };
+
+  const handleContentChange = (newData: any) => {
+    setProgramme(newData);
+    setIsDirty(JSON.stringify(newData) !== originalProgramme);
   };
 
   const handleNavigateAway = () => {
@@ -154,6 +165,7 @@ export default function EditProgrammePage({ params }: { params: { id: string } }
               <ProgrammeEditor
                 initialProgramme={programme}
                 onSave={handleProgrammeChange}
+                onChange={handleContentChange}
               />
             ) : (
               <div className="text-center py-8">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,24 +48,62 @@ interface ProgrammeEditorProps {
     content?: SectionData[];
     form?: { fields: any[] };
   };
-  onSave: (programme: {
-    title: string;
-    description: string;
-    coverImage: string;
-    content: SectionData[];
-    form: { fields: any[] };
-  }) => Promise<void>;
+  onSave: (programme: any) => Promise<void>;
+  onChange?: (programme: any) => void; // Add this
 }
 
-export function ProgrammeEditor({ initialProgramme, onSave }: ProgrammeEditorProps) {
-  const [title, setTitle] = useState(initialProgramme?.title || '');
-  const [description, setDescription] = useState(initialProgramme?.description || '');
-  const [coverImage, setCoverImage] = useState(initialProgramme?.coverImage || '');
-  const [sections, setSections] = useState<SectionData[]>(
+export function ProgrammeEditor({ 
+  initialProgramme, 
+  onSave, 
+  onChange 
+}: ProgrammeEditorProps) {
+  const [title, setTitleState] = useState(initialProgramme?.title || '');
+  const [description, setDescriptionState] = useState(initialProgramme?.description || '');
+  const [coverImage, setCoverImageState] = useState(initialProgramme?.coverImage || '');
+  const [sections, setSectionsState] = useState<SectionData[]>(
     initialProgramme?.content || []
   );
-  const [form, setForm] = useState(initialProgramme?.form || { fields: [] });
+  const [form, setFormState] = useState(initialProgramme?.form || { fields: [] });
 
+  const notifyChange = useCallback(() => {
+    if (onChange) {
+      onChange({
+        title,
+        description,
+        coverImage,
+        content: sections,
+        form
+      });
+    }
+  }, [onChange, title, description, coverImage, sections, form]);
+
+  // Replace all the state setters with wrapped versions that call notifyChange
+  const setTitle = (newTitle: string) => {
+    setTitleState(newTitle);
+    notifyChange();
+  };
+
+  const setDescription = (newDescription: string) => {
+    setDescriptionState(newDescription);
+    notifyChange();
+  };
+
+  const setCoverImage = (newImage: string) => {
+    setCoverImageState(newImage);
+    notifyChange();
+  };
+
+  const setSections = (newSections: SectionData[]) => {
+    setSectionsState(newSections);
+    notifyChange();
+  };
+
+  const setForm = (newForm: any) => {
+    setFormState(newForm);
+    notifyChange();
+  };
+
+  // Update existing functions to use new setters
   const addSection = (type: SectionData['type']) => {
     const newSection: SectionData = {
       id: nanoid(),
@@ -78,21 +116,21 @@ export function ProgrammeEditor({ initialProgramme, onSave }: ProgrammeEditorPro
     setSections([...sections, newSection]);
   };
 
-  const moveSection = (index: number, direction: 'up' | 'down') => {
-    const newSections = [...sections];
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    [newSections[index], newSections[newIndex]] = [newSections[newIndex], newSections[index]];
-    setSections(newSections);
+  const updateSection = (id: string, content: any) => {
+    setSections(sections.map(section =>
+      section.id === id ? { ...section, content } : section
+    ));
   };
 
   const removeSection = (id: string) => {
     setSections(sections.filter(section => section.id !== id));
   };
 
-  const updateSection = (id: string, content: any) => {
-    setSections(sections.map(section =>
-      section.id === id ? { ...section, content } : section
-    ));
+  const moveSection = (index: number, direction: 'up' | 'down') => {
+    const newSections = [...sections];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    [newSections[index], newSections[newIndex]] = [newSections[newIndex], newSections[index]];
+    setSections(newSections);
   };
 
   const renderSectionEditor = (section: SectionData, index: number) => {
