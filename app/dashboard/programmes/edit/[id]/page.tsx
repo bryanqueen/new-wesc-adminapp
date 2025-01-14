@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { ProgrammeEditor } from "@/components/programme-editor/editor";
@@ -20,24 +20,31 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface PageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export default function EditProgrammePage({ params }: PageProps) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [programme, setProgramme] = React.useState<any>(null);
-  const [originalProgramme, setOriginalProgramme] = React.useState<any>(null);
-  const [showUnsavedChanges, setShowUnsavedChanges] = React.useState(false);
-  const [isDirty, setIsDirty] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [programme, setProgramme] = useState<any>(null);
+  const [originalProgramme, setOriginalProgramme] = useState<any>(null);
+  const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [id, setId] = useState<string | null>(null);
 
-  const { id } = params;
+  // Unwrap params
+  useEffect(() => {
+    const unwrapParams = async () => {
+      const { id } = await params;
+      setId(id);
+    };
+    unwrapParams();
+  }, [params]);
 
   // Fetch programme data
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchProgramme = async () => {
+      if (!id) return;
       try {
         setIsLoading(true);
         const response = await fetch(`/api/programmes/${id}`);
@@ -57,9 +64,7 @@ export default function EditProgrammePage({ params }: PageProps) {
       }
     };
 
-    if (id) {
-      fetchProgramme();
-    }
+    fetchProgramme();
   }, [id]);
 
   const handleSave = async (programmeData: any) => {
@@ -101,7 +106,6 @@ export default function EditProgrammePage({ params }: PageProps) {
 
   const handleProgrammeChange = async (newData: any) => {
     setProgramme(newData);
-    // Compare with original state to determine if changes were made
     setIsDirty(JSON.stringify(newData) !== originalProgramme);
     return Promise.resolve();
   };
@@ -183,7 +187,7 @@ export default function EditProgrammePage({ params }: PageProps) {
         </Card>
       </div>
 
-      <AlertDialog 
+      <AlertDialog
         open={showUnsavedChanges}
         onOpenChange={setShowUnsavedChanges}
       >
@@ -201,7 +205,7 @@ export default function EditProgrammePage({ params }: PageProps) {
             <AlertDialogAction
               onClick={() => {
                 setShowUnsavedChanges(false);
-                router.push('/admin/dashboard/programmes');
+                router.push('/dashboard/programmes');
               }}
             >
               Discard Changes
@@ -212,4 +216,3 @@ export default function EditProgrammePage({ params }: PageProps) {
     </DashboardLayout>
   );
 }
-

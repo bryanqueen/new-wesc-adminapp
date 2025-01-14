@@ -18,7 +18,7 @@ interface Application {
   formData: Record<string, any>
 }
 
-export default function ApplicationDetailsPage({ params }: { params: { id: string } }) {
+export default function ApplicationDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const [application, setApplication] = useState<Application | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
@@ -30,11 +30,11 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
     } else {
       fetchApplicationDetails()
     }
-  }, [user, router, params.id])
+  }, [user, router, params])
 
   const fetchApplicationDetails = async () => {
     try {
-      const response = await fetch(`/api/applications/${params.id}`)
+      const response = await fetch(`/api/applications/${params}`)
       if (!response.ok) {
         throw new Error('Failed to fetch application details')
       }
@@ -53,7 +53,9 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+    </div>
   }
 
   if (!application) {

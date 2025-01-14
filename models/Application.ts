@@ -1,19 +1,16 @@
 import mongoose from 'mongoose'
 
-const BlogSchema = new mongoose.Schema({
-  title: {
+const ApplicationSchema = new mongoose.Schema({
+  applicantName: {
     type: String,
     required: true,
   },
-  content: {
-    type: String,
-    required: true,
-  },
-  author: {
+  programme: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Programme',
     required: true,
   },
+  formData: mongoose.Schema.Types.Mixed,
   createdAt: {
     type: Date,
     default: Date.now,
@@ -24,5 +21,5 @@ const BlogSchema = new mongoose.Schema({
   },
 })
 
-export default mongoose.models.Blog || mongoose.model('Blog', BlogSchema)
+export default mongoose.models.Application || mongoose.model('Application', ApplicationSchema)
 

@@ -13,16 +13,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useRouter } from 'next/navigation'
+import { AlertDialog, AlertDialogTitle, AlertDialogHeader, AlertDialogCancel, AlertDialogAction, AlertDialogFooter, AlertDialogContent } from '@/components/ui/alert-dialog'
 
 interface Blog {
-  id: string
+  _id: string
   title: string
   createdAt: string
   coverImage?: string
 }
 
 export default function BlogsPage() {
+  const router = useRouter()
   const [blogs, setBlogs] = useState<Blog[]>([])
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [blogToDelete, setShowBlogToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     // Fetch blogs from API
@@ -30,8 +35,8 @@ export default function BlogsPage() {
       try {
         const response = await fetch('/api/blogs')
         if (!response.ok) throw new Error('Failed to fetch blogs')
-        const data = await response.json()
-        setBlogs(data)
+        const blogs = await response.json()
+        setBlogs(blogs)
       } catch (error) {
         console.error('Error fetching blogs:', error)
       }
@@ -42,12 +47,19 @@ export default function BlogsPage() {
 
   const handleEdit = (id: string) => {
     // Implement edit functionality
-    console.log('Edit blog:', id);
+    router.push(`/dashboard/blogs/edit/${id}`)
   }
 
   const handleDelete = (id: string) => {
     // Implement delete functionality
-    console.log('Delete blog:', id);
+    setShowBlogToDelete(id)
+    setShowDeleteDialog(true)
+  }
+
+  const handleDeleteConfirm = async (id: string) => {
+    await fetch(`api/blogs/${id}`, { method: 'DELETE'})
+    setBlogs(blogs.filter((blog) => blog._id !== id))
+    setShowDeleteDialog(false)
   }
 
   const handleShare = (id: string) => {
@@ -76,7 +88,7 @@ export default function BlogsPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {blogs.map((blog) => (
-              <Card key={blog.id}>
+              <Card key={blog._id}>
                 <CardHeader className="relative p-0">
                   <Image
                     src={blog.coverImage || '/placeholder.svg'}
@@ -93,13 +105,13 @@ export default function BlogsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => handleEdit(blog.id)}>
+                        <DropdownMenuItem onSelect={() => handleEdit(blog._id)}>
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleDelete(blog.id)}>
+                        <DropdownMenuItem onSelect={() => handleDelete(blog._id)}>
                           Delete
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleShare(blog.id)}>
+                        <DropdownMenuItem onSelect={() => handleShare(blog._id)}>
                           Share
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -107,8 +119,8 @@ export default function BlogsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardTitle>{blog.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <CardTitle className='py-2 text-lg font-semibold'>{blog.title}</CardTitle>
+                  <p className="text-sm font-semibold text-muted-foreground mt-2">
                     Created on: {new Date(blog.createdAt).toLocaleDateString()}
                   </p>
                 </CardContent>
@@ -117,6 +129,19 @@ export default function BlogsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this blog?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDeleteConfirm(blogToDelete!)}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   )
 }
