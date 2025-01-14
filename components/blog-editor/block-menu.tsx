@@ -100,7 +100,7 @@ export function BlockMenu({ open, onClose, onSelect, position }: BlockMenuProps)
   const menuRef = React.useRef<HTMLDivElement>(null)
   const [menuPosition, setMenuPosition] = React.useState({ top: 0, left: 0 })
 
-  useClickOutside(menuRef, () => {
+  useClickOutside(menuRef as unknown as React.RefObject<HTMLElement>, () => {
     if (open) onClose()
   })
 
