@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
-    
+
     if (!file) {
       return NextResponse.json(
         { error: 'No file provided' },
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     // Upload to Vercel Blob
     const blob = await put(`blog-images/${nanoid()}-${file.name}`, file, {
       access: 'public',
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     })
 
     return NextResponse.json({ url: blob.url })

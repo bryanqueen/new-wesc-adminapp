@@ -6,6 +6,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { BlogEditor } from "@/components/blog-editor/editor";
 import { toast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 export default function EditBlogPage({ params }: { params: Promise<{ id: string }> }) {
   const [blog, setBlog] = useState<any>(null);
@@ -65,7 +66,7 @@ export default function EditBlogPage({ params }: { params: Promise<{ id: string 
 
       toast({
         title: "Success",
-        description: "Blog post updated successfully",
+        description: "Blog post updated successfully"
       });
       router.push('/dashboard/blogs');
     } catch (error) {
@@ -93,7 +94,16 @@ export default function EditBlogPage({ params }: { params: Promise<{ id: string 
   }
 
   if (!blog) {
-    return <div>Blog not found</div>;
+    return <div className='min-h-screen flex flex-col items-center justify-center gap-5'>
+      <h1 className='text-6xl'>Blog Not found</h1>
+      <Button
+      onClick={handleNavigateAway}
+      className='inline-flex gap-2 items-center rounded-full'
+      >
+        Go back Home
+        <ArrowRight/>
+      </Button>
+    </div>;
   }
 
   return (
