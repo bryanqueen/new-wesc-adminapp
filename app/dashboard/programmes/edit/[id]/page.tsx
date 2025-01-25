@@ -32,6 +32,7 @@ export default function EditProgrammePage({ params }: PageProps) {
   const [isDirty, setIsDirty] = useState(false);
   const [id, setId] = useState<string | null>(null);
 
+
   // Unwrap params
   useEffect(() => {
     const unwrapParams = async () => {
@@ -67,8 +68,14 @@ export default function EditProgrammePage({ params }: PageProps) {
     fetchProgramme();
   }, [id]);
 
-  const handleSave = async (programmeData: any) => {
-    setIsLoading(true);
+  const handleSave = async (programmeData: {
+    title: string;
+    description: string;
+    coverImage: string;
+    content: any[];
+    form: any
+  }) => {
+   
     try {
       const response = await fetch(`/api/programmes/${id}`, {
         method: 'PUT',
@@ -82,14 +89,9 @@ export default function EditProgrammePage({ params }: PageProps) {
         throw new Error('Failed to update programme');
       }
 
-      const updatedData = await response.json();
-      setProgramme(updatedData);
-      setOriginalProgramme(JSON.stringify(updatedData));
-      setIsDirty(false);
-
       toast({
         title: "Success",
-        description: "Programme updated successfully",
+        description: "Programme updated successfully"
       });
       router.push('/dashboard/programmes');
     } catch (error) {
@@ -141,7 +143,7 @@ export default function EditProgrammePage({ params }: PageProps) {
               >
                 Cancel
               </Button>
-              <Button
+              {/* <Button
                 onClick={() => handleSave(programme)}
                 disabled={isLoading || !isDirty}
                 className="bg-primary text-white hover:bg-primary/90"
@@ -157,7 +159,7 @@ export default function EditProgrammePage({ params }: PageProps) {
                     Save Changes
                   </>
                 )}
-              </Button>
+              </Button> */}
             </div>
           </CardHeader>
           <CardContent>
@@ -168,8 +170,8 @@ export default function EditProgrammePage({ params }: PageProps) {
             ) : programme ? (
               <ProgrammeEditor
                 initialProgramme={programme}
-                onSave={handleProgrammeChange}
-                onChange={handleContentChange}
+                onSave={handleSave}
+                onChange={handleProgrammeChange}
               />
             ) : (
               <div className="text-center py-8">

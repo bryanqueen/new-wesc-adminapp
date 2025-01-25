@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { nanoid } from 'nanoid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Grip, Trash2, Plus, Settings2 } from 'lucide-react';
+import { Grip, Trash2, Plus, Settings2, X } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '../ui/textarea';
 
 export interface FormField {
   id: string;
@@ -47,7 +49,12 @@ export interface FormField {
 
 interface FormBuilderProps {
   form: {
-    fields: FormField[];
+    sections: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      fields: FormField[];
+    }>;
     settings?: {
       submitButtonText: string;
       successMessage: string;
@@ -55,7 +62,15 @@ interface FormBuilderProps {
       notificationEmail?: string;
     };
   };
-  onChange: (form: { fields: FormField[], settings?: any }) => void;
+  onChange: (form: { 
+    sections: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      fields: FormField[];
+    }>, 
+    settings?: any 
+  }) => void;
 }
 
 const PREDEFINED_FIELDS = {
@@ -102,9 +117,54 @@ const PREDEFINED_FIELDS = {
 };
 
 export function FormBuilder({ form, onChange }: FormBuilderProps) {
-  const [selectedField, setSelectedField] = React.useState<FormField | null>(null);
+  // Ensure form and sections always have a default value
+  const safeForm = form || { 
+    sections: [{ 
+      id: nanoid(), 
+      title: 'Personal Information', 
+      description: 'Please provide your personal details',
+      fields: [] 
+    }],
+    settings: {
+      submitButtonText: 'Submit',
+      successMessage: 'Form submitted successfully'
+    }
+  };
 
-  const addField = (type: FormField['type']) => {
+  const [newOption, setNewOption] = useState('');
+
+  const addSection = () => {
+    const newSection = {
+      id: nanoid(),
+      title: 'New Section',
+      description: '',
+      fields: []
+    };
+    onChange({
+      ...safeForm,
+      sections: [...safeForm.sections, newSection]
+    });
+  };
+
+  const updateSection = (sectionId: string, updates: Partial<{ title: string, description: string }>) => {
+    onChange({
+      ...safeForm,
+      sections: safeForm.sections.map(section => 
+        section.id === sectionId 
+          ? { ...section, ...updates } 
+          : section
+      )
+    });
+  };
+
+  const removeSection = (sectionId: string) => {
+    onChange({
+      ...safeForm,
+      sections: safeForm.sections.filter(section => section.id !== sectionId)
+    });
+  };
+
+  const addFieldToSection = (sectionId: string, type: FormField['type']) => {
     const newField: FormField = {
       id: nanoid(),
       type,
@@ -113,58 +173,110 @@ export function FormBuilder({ form, onChange }: FormBuilderProps) {
       required: false,
       validation: {}
     };
-    onChange({ 
-      ...form,
-      fields: [...form.fields, newField]
-    });
-  };
 
-  const addPredefinedFields = (fields: Partial<FormField>[]) => {
-    const newFields = fields.map(field => ({
-      ...field,
-      id: nanoid()
-    })) as FormField[];
-    
     onChange({
-      ...form,
-      fields: [...form.fields, ...newFields]
-    });
-  };
-
-  const updateField = (id: string, updates: Partial<FormField>) => {
-    onChange({
-      ...form,
-      fields: form.fields.map(field =>
-        field.id === id ? { ...field, ...updates } : field
+      ...safeForm,
+      sections: safeForm.sections.map(section => 
+        section.id === sectionId 
+          ? { ...section, fields: [...section.fields, newField] }
+          : section
       )
     });
   };
 
-  const removeField = (id: string) => {
+  const updateField = (sectionId: string, fieldId: string, updates: Partial<FormField>) => {
     onChange({
-      ...form,
-      fields: form.fields.filter(field => field.id !== id)
+      ...safeForm,
+      sections: safeForm.sections.map(section => 
+        section.id === sectionId 
+          ? { 
+              ...section, 
+              fields: section.fields.map(field => 
+                field.id === fieldId ? { ...field, ...updates } : field
+              )
+            }
+          : section
+      )
+    });
+  };
+
+  const removeField = (sectionId: string, fieldId: string) => {
+    onChange({
+      ...safeForm,
+      sections: safeForm.sections.map(section => 
+        section.id === sectionId
+          ? { 
+              ...section, 
+              fields: section.fields.filter(field => field.id !== fieldId)
+            }
+          : section
+      )
+    });
+  };
+
+  const addOptionToField = (sectionId: string, fieldId: string, option: string) => {
+    if (!option.trim()) return;
+
+    onChange({
+      ...safeForm,
+      sections: safeForm.sections.map(section => 
+        section.id === sectionId
+          ? { 
+              ...section, 
+              fields: section.fields.map(field => 
+                field.id === fieldId 
+                  ? { 
+                      ...field, 
+                      options: [...(field.options || []), option.trim()] 
+                    }
+                  : field
+              )
+            }
+          : section
+      )
+    });
+    setNewOption('');
+  };
+
+  const removeOptionFromField = (sectionId: string, fieldId: string, optionToRemove: string) => {
+    onChange({
+      ...safeForm,
+      sections: safeForm.sections.map(section => 
+        section.id === sectionId
+          ? { 
+              ...section, 
+              fields: section.fields.map(field => 
+                field.id === fieldId 
+                  ? { 
+                      ...field, 
+                      options: field.options?.filter(option => option !== optionToRemove)
+                    }
+                  : field
+              )
+            }
+          : section
+      )
     });
   };
 
   const updateSettings = (updates: any) => {
     onChange({
-      ...form,
+      ...safeForm,
       settings: {
-        ...form.settings,
+        ...safeForm.settings,
         ...updates
       }
     });
   };
 
-  const renderFieldEditor = (field: FormField) => {
+  const renderFieldEditor = (sectionId: string, field: FormField) => {
     return (
       <div className="space-y-4 p-4">
         <div className="space-y-2">
           <Label>Field Label</Label>
           <Input
             value={field.label}
-            onChange={(e) => updateField(field.id, { label: e.target.value })}
+            onChange={(e) => updateField(sectionId, field.id, { label: e.target.value })}
             placeholder="Enter field label"
           />
         </div>
@@ -173,31 +285,47 @@ export function FormBuilder({ form, onChange }: FormBuilderProps) {
           <Label>Placeholder Text</Label>
           <Input
             value={field.placeholder}
-            onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
+            onChange={(e) => updateField(sectionId, field.id, { placeholder: e.target.value })}
             placeholder="Enter placeholder text"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Help Text</Label>
-          <Input
-            value={field.helpText}
-            onChange={(e) => updateField(field.id, { helpText: e.target.value })}
-            placeholder="Enter help text"
           />
         </div>
 
         {(field.type === 'select' || field.type === 'radio') && (
           <div className="space-y-2">
-            <Label>Options (one per line)</Label>
-            <textarea
-              className="w-full min-h-[100px] p-2 border rounded"
-              value={field.options?.join('\n')}
-              onChange={(e) => updateField(field.id, {
-                options: e.target.value.split('\n').filter(Boolean)
-              })}
-              placeholder="Enter options"
-            />
+            <Label>Options</Label>
+            <div className="flex space-x-2">
+              <Input
+                value={newOption}
+                onChange={(e) => setNewOption(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    addOptionToField(sectionId, field.id, newOption);
+                  }
+                }}
+                placeholder="Enter new option"
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => addOptionToField(sectionId, field.id, newOption)}
+              >
+                Add
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {field.options?.map((option) => (
+                <Badge 
+                  key={option} 
+                  variant="secondary" 
+                  className="flex items-center"
+                >
+                  {option}
+                  <X 
+                    className="ml-2 h-3 w-3 cursor-pointer" 
+                    onClick={() => removeOptionFromField(sectionId, field.id, option)}
+                  />
+                </Badge>
+              ))}
+            </div>
           </div>
         )}
 
@@ -209,55 +337,10 @@ export function FormBuilder({ form, onChange }: FormBuilderProps) {
               id={`required-${field.id}`}
               checked={field.required}
               onCheckedChange={(checked) => 
-                updateField(field.id, { required: !!checked })
+                updateField(sectionId, field.id, { required: !!checked })
               }
             />
             <label htmlFor={`required-${field.id}`}>Required field</label>
-          </div>
-
-          {(field.type === 'text' || field.type === 'textarea') && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Minimum Length</Label>
-                <Input
-                  type="number"
-                  value={field.validation?.minLength || ''}
-                  onChange={(e) => updateField(field.id, {
-                    validation: {
-                      ...field.validation,
-                      minLength: parseInt(e.target.value) || undefined
-                    }
-                  })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Maximum Length</Label>
-                <Input
-                  type="number"
-                  value={field.validation?.maxLength || ''}
-                  onChange={(e) => updateField(field.id, {
-                    validation: {
-                      ...field.validation,
-                      maxLength: parseInt(e.target.value) || undefined
-                    }
-                  })}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label>Custom Error Message</Label>
-            <Input
-              value={field.validation?.customError || ''}
-              onChange={(e) => updateField(field.id, {
-                validation: {
-                  ...field.validation,
-                  customError: e.target.value
-                }
-              })}
-              placeholder="Enter custom error message"
-            />
           </div>
         </div>
       </div>
@@ -266,165 +349,179 @@ export function FormBuilder({ form, onChange }: FormBuilderProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Form Fields</h3>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Settings2 className="h-4 w-4 mr-2" />
-              Form Settings
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Form Settings</SheetTitle>
-              <SheetDescription>
-                Configure your form's behavior and notifications
-              </SheetDescription>
-            </SheetHeader>
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>Submit Button Text</Label>
+      {safeForm.sections.map((section) => (
+        <Card key={section.id}>
+          <CardHeader>
+            <div className="flex justify-between items-center gap-2">
+              <div className='w-full'>
                 <Input
-                  value={form.settings?.submitButtonText || 'Submit'}
-                  onChange={(e) => updateSettings({ submitButtonText: e.target.value })}
+                  value={section.title}
+                  onChange={(e) => updateSection(section.id, { title: e.target.value })}
+                  placeholder="Section Title"
+                  className="font-semibold text-lg"
+                />
+                <Textarea
+                  value={section.description || ''}
+                  onChange={(e) => updateSection(section.id, { description: e.target.value })}
+                  placeholder="Section Description (optional)"
+                  className="text-sm text-muted-foreground mt-2"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Success Message</Label>
-                <Input
-                  value={form.settings?.successMessage || 'Form submitted successfully'}
-                  onChange={(e) => updateSettings({ successMessage: e.target.value })}
+              <Button 
+                variant="destructive" 
+                size="icon"
+                onClick={() => removeSection(section.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {section.fields.map((field) => (
+                <Card key={field.id}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="flex items-center space-x-2">
+                      <Grip className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <div className="font-medium">{field.label || 'Untitled Field'}</div>
+                        <div className="text-sm text-gray-500">{field.type}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Sheet>
+                        <SheetTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Settings2 className="h-4 w-4" />
+                          </Button>
+                        </SheetTrigger>
+                        <SheetContent>
+                          <SheetHeader>
+                            <SheetTitle>Edit Field</SheetTitle>
+                          </SheetHeader>
+                          {renderFieldEditor(section.id, field)}
+                        </SheetContent>
+                      </Sheet>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeField(section.id, field.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'text')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Text
+              </Button>
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'email')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Email
+              </Button>
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'tel')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Phone
+              </Button>
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'number')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Number
+              </Button>
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'select')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Dropdown
+              </Button>
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'radio')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Radio
+              </Button>
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'checkbox')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Checkbox
+              </Button>
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'textarea')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Long Text
+              </Button>
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'date')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Date
+              </Button>
+              <Button variant="outline" onClick={() => addFieldToSection(section.id, 'file')}>
+                <Plus className="h-4 w-4 mr-2" />
+                File Upload
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+
+      <Button 
+        variant="outline" 
+        onClick={addSection}
+        className="w-full"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Add New Section
+      </Button>
+
+      <Sheet>
+      <SheetTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Settings2 className="h-4 w-4 mr-2" />
+            Form Settings
+          </Button>
+        </SheetTrigger>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Form Settings</SheetTitle>
+            <SheetDescription>
+              Configure your form's behavior and notifications
+            </SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label>Submit Button Text</Label>
+              <Input
+                value={safeForm.settings?.submitButtonText || 'Submit'}
+                onChange={(e) => updateSettings({ submitButtonText: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Success Message</Label>
+              <Input
+                value={safeForm.settings?.successMessage || 'Form submitted successfully'}
+                onChange={(e) => updateSettings({ successMessage: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={safeForm.settings?.enableEmailNotifications}
+                  onCheckedChange={(checked) => 
+                    updateSettings({ enableEmailNotifications: checked })
+                  }
                 />
+                <Label>Enable Email Notifications</Label>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={form.settings?.enableEmailNotifications}
-                    onCheckedChange={(checked) => 
-                      updateSettings({ enableEmailNotifications: checked })
-                    }
-                  />
-                  <Label>Enable Email Notifications</Label>
-                </div>
-                {form.settings?.enableEmailNotifications && (
-                  <Input
-                    type="email"
-                    value={form.settings?.notificationEmail || ''}
-                    onChange={(e) => updateSettings({ notificationEmail: e.target.value })}
-                    placeholder="Enter notification email"
-                  />
-                )}
-              </div>
+              {safeForm.settings?.enableEmailNotifications && (
+                <Input
+                  type="email"
+                  value={safeForm.settings?.notificationEmail || ''}
+                  onChange={(e) => updateSettings({ notificationEmail: e.target.value })}
+                  placeholder="Enter notification email"
+                />
+              )}
             </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="predefined">
-          <AccordionTrigger>Predefined Field Groups</AccordionTrigger>
-          <AccordionContent>
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                variant="outline"
-                onClick={() => addPredefinedFields(PREDEFINED_FIELDS.personalInfo)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Personal Info Fields
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => addPredefinedFields(PREDEFINED_FIELDS.education)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Education Fields
-              </Button>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-
-      <div className="space-y-4">
-        {form.fields.map((field, index) => (
-          <Card key={field.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="flex items-center space-x-2">
-                <Grip className="h-4 w-4 text-gray-400" />
-                <div>
-                  <div className="font-medium">{field.label || 'Untitled Field'}</div>
-                  <div className="text-sm text-gray-500">{field.type}</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Settings2 className="h-4 w-4" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Edit Field</SheetTitle>
-                    </SheetHeader>
-                    {renderFieldEditor(field)}
-                  </SheetContent>
-                </Sheet>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeField(field.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <Button variant="outline" onClick={() => addField('text')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Text
-        </Button>
-        <Button variant="outline" onClick={() => addField('email')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Email
-        </Button>
-        <Button variant="outline" onClick={() => addField('tel')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Phone
-        </Button>
-        <Button variant="outline" onClick={() => addField('number')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Number
-        </Button>
-        <Button variant="outline" onClick={() => addField('select')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Dropdown
-        </Button>
-        <Button variant="outline" onClick={() => addField('radio')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Radio
-        </Button>
-        <Button variant="outline" onClick={() => addField('checkbox')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Checkbox
-        </Button>
-        <Button variant="outline" onClick={() => addField('textarea')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Long Text
-        </Button>
-        <Button variant="outline" onClick={() => addField('date')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Date
-        </Button>
-        <Button variant="outline" onClick={() => addField('file')}>
-          <Plus className="h-4 w-4 mr-2" />
-          File Upload
-        </Button>
-      </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
+
+export default FormBuilder;

@@ -51,6 +51,11 @@ export function ImageUpload({ onUpload, value, className }: ImageUploadProps) {
     maxFiles: 1
   })
 
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onUpload('') //Explicitly pass empty strings to remove
+  }
+
   return (
     <div className={`relative ${className}`}>
       {value ? (
@@ -66,10 +71,7 @@ export function ImageUpload({ onUpload, value, className }: ImageUploadProps) {
             size="icon"
             variant="destructive"
             className="absolute top-2 right-2"
-            onClick={(e) => {
-              e.stopPropagation()
-              onUpload('')
-            }}
+            onClick={handleRemove}
           >
             <X className="h-4 w-4" />
           </Button>

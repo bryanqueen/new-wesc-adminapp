@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ImageUpload } from '../blog-editor/image-upload';
 import { Textarea } from '@/components/ui/textarea';
 import { FormBuilder } from './form-builder';
+import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, MoveUp, MoveDown, Image as ImageIcon } from 'lucide-react';
 import { 
@@ -14,6 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+type SectionContent =
+  | string
+  | { url: string; caption?: string }
+  | Feature[]
+  | { quote: string; author: string; role?: string }
 
 interface SectionData {
   id: string;
@@ -60,22 +67,46 @@ export function ProgrammeEditor({
   const [title, setTitleState] = useState(initialProgramme?.title || '');
   const [description, setDescriptionState] = useState(initialProgramme?.description || '');
   const [coverImage, setCoverImageState] = useState(initialProgramme?.coverImage || '');
+  const [isLoading, setIsLoading] = useState(false)
   const [sections, setSectionsState] = useState<SectionData[]>(
     initialProgramme?.content || []
   );
-  const [form, setFormState] = useState(initialProgramme?.form || { fields: [] });
+  const [form, setFormState] = useState(
+    initialProgramme?.form || { 
+      sections: [{ 
+        id: nanoid(), 
+        title: 'New Section', 
+        description: '', 
+        fields: [] 
+      }],
+      settings: {
+        submitButtonText: 'Submit',
+        successMessage: 'Form submitted successfully'
+      }
+    }
+  );
 
   const notifyChange = useCallback(() => {
     if (onChange) {
-      onChange({
+      const updatedProgramme = {
         title,
         description,
         coverImage,
-        content: sections,
-        form
-      });
+        content: sections, // Should reflect the updated sections
+        form,
+      };
+      console.log('Notifying Change with Data:', updatedProgramme);
+      onChange(updatedProgramme);
     }
   }, [onChange, title, description, coverImage, sections, form]);
+
+  function debounce (func: () => void, delay: number) {
+    let timer: NodeJS.Timeout;
+    return () => {
+      clearTimeout(timer);
+      timer = setTimeout(func, delay)
+    }
+  }
 
   // Replace all the state setters with wrapped versions that call notifyChange
   const setTitle = (newTitle: string) => {
@@ -95,8 +126,11 @@ export function ProgrammeEditor({
 
   const setSections = (newSections: SectionData[]) => {
     setSectionsState(newSections);
-    notifyChange();
+    // Debounce notifyChange to avoid frequent calls during typing
+    const debounceNotify = debounce(() => notifyChange(), 300);
+    debounceNotify();
   };
+  
 
   const setForm = (newForm: any) => {
     setFormState(newForm);
@@ -116,15 +150,25 @@ export function ProgrammeEditor({
     setSections([...sections, newSection]);
   };
 
-  const updateSection = (id: string, content: any) => {
-    setSections(sections.map(section =>
-      section.id === id ? { ...section, content } : section
-    ));
+  const updateSection = (id: string, content: SectionContent) => {
+    setSections((prevSections) => 
+      prevSections.map((section) =>
+        section.id === id ? { ...section, content } : section
+      )
+    );
+    notifyChange();
   };
-
+  
+  
+  
   const removeSection = (id: string) => {
-    setSections(sections.filter(section => section.id !== id));
+    const updatedSections = sections.filter((section) => section.id !== id);
+    setSections(updatedSections);
+    console.log('After Deletion, Updated Sections:', updatedSections); // Log the updated state
+    notifyChange(); // Propagate the change
   };
+  
+  
 
   const moveSection = (index: number, direction: 'up' | 'down') => {
     const newSections = [...sections];
@@ -135,15 +179,15 @@ export function ProgrammeEditor({
 
   const renderSectionEditor = (section: SectionData, index: number) => {
     switch (section.type) {
-      case 'header':
-        return (
-          <Input
-            value={section.content}
-            onChange={(e) => updateSection(section.id, e.target.value)}
-            placeholder="Section Header"
-            className="text-xl font-bold"
-          />
-        );
+case 'header':
+  return (
+    <Input
+      value={section.content || ''} // Add null/undefined check
+      onChange={(e) => updateSection(section.id, e.target.value)}
+      placeholder="Section Header"
+      className="text-xl font-bold"
+    />
+  );
       
       case 'text':
         return (
@@ -156,18 +200,26 @@ export function ProgrammeEditor({
         );
 
       case 'image':
+
+      //Handle both string and object image content
+      const imageContent = typeof section.content === 'string'
+        ? { url: section.content, caption: '' }
+        : section.content || { url: '', caption: ''};  
         return (
           <div className="space-y-2">
             <ImageUpload
-              onUpload={(url) => updateSection(section.id, url)}
-              value={section.content}
+              onUpload={(url) => updateSection(section.id, {
+                url,
+                caption: imageContent.caption || ''
+              })}
+              value={imageContent.url}
               className="w-full h-[200px]"
             />
             <Input
               placeholder="Image Caption (optional)"
-              value={section.content.caption || ''}
+              value={imageContent.caption || ''}
               onChange={(e) => updateSection(section.id, {
-                ...section.content,
+                url: imageContent.url,
                 caption: e.target.value
               })}
             />
@@ -414,7 +466,15 @@ export function ProgrammeEditor({
         onClick={() => onSave({ title, description, coverImage, content: sections, form })}
         className="w-full bg-primary text-white hover:bg-primary/90"
       >
-        Save Programme
+        {isLoading ? (
+          <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Saving
+          </>
+        ) : 
+        'Save Programme'
+
+        }
       </Button>
     </div>
   );
