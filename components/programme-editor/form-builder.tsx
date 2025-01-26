@@ -290,7 +290,7 @@ export function FormBuilder({ form, onChange }: FormBuilderProps) {
           />
         </div>
 
-        {(field.type === 'select' || field.type === 'radio') && (
+        {(field.type === "select" || field.type === "radio" || field.type === "checkbox") && (
           <div className="space-y-2">
             <Label>Options</Label>
             <div className="flex space-x-2">
@@ -298,29 +298,22 @@ export function FormBuilder({ form, onChange }: FormBuilderProps) {
                 value={newOption}
                 onChange={(e) => setNewOption(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    addOptionToField(sectionId, field.id, newOption);
+                  if (e.key === "Enter") {
+                    addOptionToField(sectionId, field.id, newOption)
                   }
                 }}
                 placeholder="Enter new option"
               />
-              <Button 
-                variant="outline" 
-                onClick={() => addOptionToField(sectionId, field.id, newOption)}
-              >
+              <Button variant="outline" onClick={() => addOptionToField(sectionId, field.id, newOption)}>
                 Add
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {field.options?.map((option) => (
-                <Badge 
-                  key={option} 
-                  variant="secondary" 
-                  className="flex items-center"
-                >
+                <Badge key={option} variant="secondary" className="flex items-center">
                   {option}
-                  <X 
-                    className="ml-2 h-3 w-3 cursor-pointer" 
+                  <X
+                    className="ml-2 h-3 w-3 cursor-pointer"
                     onClick={() => removeOptionFromField(sectionId, field.id, option)}
                   />
                 </Badge>
@@ -331,21 +324,19 @@ export function FormBuilder({ form, onChange }: FormBuilderProps) {
 
         <div className="space-y-4">
           <Label>Validation</Label>
-          
+
           <div className="flex items-center space-x-2">
             <Checkbox
               id={`required-${field.id}`}
               checked={field.required}
-              onCheckedChange={(checked) => 
-                updateField(sectionId, field.id, { required: !!checked })
-              }
+              onCheckedChange={(checked) => updateField(sectionId, field.id, { required: !!checked })}
             />
             <label htmlFor={`required-${field.id}`}>Required field</label>
           </div>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <div className="space-y-6">

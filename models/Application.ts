@@ -1,16 +1,15 @@
 import mongoose from 'mongoose'
 
 const ApplicationSchema = new mongoose.Schema({
-  applicantName: {
-    type: String,
-    required: true,
-  },
-  programme: {
+  programmeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Programme',
     required: true,
   },
-  formData: mongoose.Schema.Types.Mixed,
+  formData: {
+    type: mongoose.Schema.Types.Mixed,
+    required: true
+  },
   createdAt: {
     type: Date,
     default: Date.now,
