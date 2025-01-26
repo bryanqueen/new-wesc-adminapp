@@ -25,23 +25,8 @@ interface GroupedApplications {
   }
 }
 
-// Dummy data
-const dummyGroupedApplications: GroupedApplications = {
-  "prog1": {
-    programmeTitle: "Medical Residency",
-    applications: [
-      { id: "app1", applicantName: "John Doe", createdAt: "2023-05-15T10:30:00Z", programme: { id: "prog1", title: "Medical Residency" } },
-      { id: "app2", applicantName: "Jane Smith", createdAt: "2023-05-16T14:45:00Z", programme: { id: "prog1", title: "Medical Residency" } },
-    ]
-  },
-  "prog2": {
-    programmeTitle: "Nursing Scholarship",
-    applications: [
-      { id: "app3", applicantName: "Alice Johnson", createdAt: "2023-05-17T09:15:00Z", programme: { id: "prog2", title: "Nursing Scholarship" } },
-      { id: "app4", applicantName: "Bob Williams", createdAt: "2023-05-18T11:00:00Z", programme: { id: "prog2", title: "Nursing Scholarship" } },
-    ]
-  }
-}
+
+
 
 export default function ApplicationsPage() {
   const [groupedApplications, setGroupedApplications] = useState<GroupedApplications>({})

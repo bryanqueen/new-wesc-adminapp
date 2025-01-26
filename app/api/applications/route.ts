@@ -30,27 +30,30 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  let connection;
   try {
-    const { programmeId, formData } = await request.json()
+    connection = await dbConnect();
+    
+    const { programmeId, formData } = await request.json();
 
     if (!programmeId || !formData) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const newApplication = new Application({
       programmeId,
       formData,
-    })
+    });
 
-    await newApplication.save()
+    await newApplication.save();
 
     return NextResponse.json(
       { message: "Application submitted successfully", application: newApplication },
       { status: 201 },
-    )
+    );
   } catch (error) {
-    console.error('Error creating application:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error creating application:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
