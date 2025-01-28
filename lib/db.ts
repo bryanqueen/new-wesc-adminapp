@@ -35,6 +35,7 @@ async function dbConnect(): Promise<typeof mongoose> {
   }
 
   try {
+    mongoose.set('strictPopulate', false);
     cached.conn = await cached.promise
   } catch (e) {
     cached.promise = null

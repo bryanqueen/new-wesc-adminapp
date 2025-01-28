@@ -27,17 +27,20 @@ interface BlogPost {
   createdAt: string
 }
 
-interface Application {
-  _id: string
-  applicantName: string
-  programme: { title: string }
-  createdAt: string
-}
+// interface Application {
+//   _id: string
+//   applicantName: string
+//   programmeId?: {
+//     _id: string;
+//     title: string;
+//   };
+//   createdAt: string
+// }
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({ blogCount: 0, programmeCount: 0, applicationCount: 0 })
   const [recentBlogs, setRecentBlogs] = useState<BlogPost[]>([])
-  const [recentApplications, setRecentApplications] = useState<Application[]>([])
+  // const [recentApplications, setRecentApplications] = useState<Application[]>([])
   const { user } = useAuth() // Use the auth hook to get the user
 
   useEffect(() => {
@@ -55,7 +58,7 @@ export default function DashboardPage() {
 
         setStats(statsData)
         setRecentBlogs(blogsData)
-        setRecentApplications(applicationsData)
+        // setRecentApplications(applicationsData)
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
       }
@@ -143,7 +146,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Recent Applications</CardTitle>
             </CardHeader>
@@ -153,7 +156,7 @@ export default function DashboardPage() {
                   {recentApplications.map((application) => (
                     <li key={application._id}>
                       <Link href={`/dashboard/applications/${application._id}`} className="text-primary hover:underline">
-                        {application.applicantName} - {application.programme.title}
+                        {application.applicantName} - {application.programmeId.title}
                       </Link>
                       <p className="text-sm text-gray-500">
                         Applied on: {new Date(application.createdAt).toLocaleDateString()}
@@ -165,7 +168,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-gray-500">No applications yet</p>
               )}
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </motion.div>
     </DashboardLayout>

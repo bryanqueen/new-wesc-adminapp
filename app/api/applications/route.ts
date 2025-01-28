@@ -4,6 +4,7 @@ import Application from '@/models/Application'
 import { verifyToken } from '@/lib/auth'
 import { cookies } from 'next/headers'
 
+// route.ts
 export async function GET(request: Request) {
   try {
     const cookieStore = await cookies()
@@ -20,9 +21,12 @@ export async function GET(request: Request) {
     await dbConnect()
     const applications = await Application.find()
       .sort({ createdAt: -1 })
-      .populate('programme', 'title')
+      .populate('programmeId', 'title')
+      .lean()
 
-    return NextResponse.json(applications)
+      console.log('Applications:', applications);
+
+    return NextResponse.json(applications, {status: 200})
   } catch (error) {
     console.error('Error fetching applications:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

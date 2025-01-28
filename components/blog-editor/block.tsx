@@ -1,8 +1,5 @@
-'use client'
-
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import Image from 'next/image'
 import { ImageUpload } from './image-upload'
 
 interface BlockProps {
@@ -27,6 +24,7 @@ export function Block({
   onFocus,
 }: BlockProps) {
   const blockRef = React.useRef<HTMLDivElement>(null)
+  const [selectionPosition, setSelectionPosition] = React.useState<number | null>(null)
 
   React.useEffect(() => {
     if (isActive && blockRef.current) {
@@ -34,15 +32,51 @@ export function Block({
     }
   }, [isActive])
 
+  React.useEffect(() => {
+    if (selectionPosition !== null && blockRef.current) {
+      const selection = window.getSelection()
+      const range = document.createRange()
+      const textNode = blockRef.current.firstChild || blockRef.current
+
+      try {
+        range.setStart(textNode, selectionPosition)
+        range.setEnd(textNode, selectionPosition)
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+        setSelectionPosition(null)
+      } catch (e) {
+        console.error('Error setting cursor position:', e)
+      }
+    }
+  }, [content, selectionPosition])
+
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const newContent = e.currentTarget.textContent || ''
+    const selection = window.getSelection()
+    
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0)
+      const position = range.startOffset
+      setSelectionPosition(position)
+    }
+    
     onChange(newContent)
   }
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
     const text = e.clipboardData.getData('text/plain')
-    document.execCommand('insertText', false, text)
+    const selection = window.getSelection()
+    
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0)
+      const position = range.startOffset + text.length
+      
+      document.execCommand('insertText', false, text)
+      setSelectionPosition(position)
+    } else {
+      document.execCommand('insertText', false, text)
+    }
   }
 
   if (type === 'image') {
@@ -86,10 +120,9 @@ export function Block({
       onFocus={onFocus}
       onPaste={handlePaste}
       data-placeholder={placeholder}
-      dir="ltr"
+      spellCheck="false"
     >
       {content}
     </div>
   )
 }
-

@@ -37,6 +37,40 @@ export function BlogEditor({ initialBlog, onSave }: BlogEditorProps) {
   const [menuPosition, setMenuPosition] = React.useState({ top: 0, left: 0 })
   const [isSaving, setIsSaving] = React.useState(false)
   const editorRef = React.useRef<HTMLDivElement>(null)
+  const titleRef = React.useRef<HTMLDivElement>(null)
+  const [titleSelectionPosition, setTitleSelectionPosition] = React.useState<number | null>(null)
+
+  const handleTitleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const newContent = e.currentTarget.textContent || ''
+    const selection = window.getSelection()
+    
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0)
+      const position = range.startOffset
+      setTitleSelectionPosition(position)
+    }
+    
+    setTitle(newContent)
+  }
+
+  React.useEffect(() => {
+    if (titleSelectionPosition !== null && titleRef.current) {
+      const selection = window.getSelection()
+      const range = document.createRange()
+      const textNode = titleRef.current.firstChild || titleRef.current
+
+      try {
+        range.setStart(textNode, titleSelectionPosition)
+        range.setEnd(textNode, titleSelectionPosition)
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+        setTitleSelectionPosition(null)
+      } catch (e) {
+        console.error('Error setting cursor position:', e)
+      }
+    }
+  }, [title, titleSelectionPosition])
+
 
   const handleKeyDown = (e: React.KeyboardEvent, blockId: string) => {
     const currentBlock = blocks.find(b => b.id === blockId)
@@ -45,9 +79,9 @@ export function BlogEditor({ initialBlog, onSave }: BlogEditorProps) {
     if (e.key === '/') {
       e.preventDefault()
       const rect = e.currentTarget.getBoundingClientRect()
-      setMenuPosition({ 
-        top: rect.top + window.scrollY, 
-        left: rect.left 
+      setMenuPosition({
+        top: rect.top + window.scrollY,
+        left: rect.left
       })
       setShowBlockMenu(true)
     } else if (e.key === 'Enter' && !e.shiftKey) {
@@ -74,7 +108,7 @@ export function BlogEditor({ initialBlog, onSave }: BlogEditorProps) {
   }
 
   const handleBlockChange = (id: string, content: string) => {
-    setBlocks(blocks.map(block => 
+    setBlocks(blocks.map(block =>
       block.id === id ? { ...block, content } : block
     ))
   }
@@ -120,9 +154,9 @@ export function BlogEditor({ initialBlog, onSave }: BlogEditorProps) {
 
     try {
       setIsSaving(true)
-      await onSave({ 
-        title, 
-        coverImage, 
+      await onSave({
+        title,
+        coverImage,
         content: blocks.filter(block => block.content.trim() !== '') // Remove empty blocks
       })
     } catch (error) {
@@ -142,11 +176,13 @@ export function BlogEditor({ initialBlog, onSave }: BlogEditorProps) {
     <div className="max-w-4xl mx-auto" ref={editorRef}>
       <div className="mb-8 space-y-4">
         <div
+          ref={titleRef}
           contentEditable
           suppressContentEditableWarning
           className="text-5xl font-bold px-4 py-2 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
           data-placeholder="Blog Title"
-          onInput={(e) => setTitle(e.currentTarget.textContent || '')}
+          onInput={handleTitleInput}
+          spellCheck="false"
         >
           {title}
         </div>
@@ -180,8 +216,8 @@ export function BlogEditor({ initialBlog, onSave }: BlogEditorProps) {
         position={menuPosition}
       />
 
-    <div className="py-4">
-        <Button 
+      <div className="py-4">
+        <Button
           onClick={handleSave}
           className="bg-primary text-white hover:bg-primary/90"
           disabled={isSaving}
