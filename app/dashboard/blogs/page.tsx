@@ -57,15 +57,15 @@ export default function BlogsPage() {
   }
 
   const handleDeleteConfirm = async (id: string) => {
-    await fetch(`api/blogs/${id}`, { method: 'DELETE'})
+    await fetch(`/api/blogs/${id}`, { method: 'DELETE'})
     setBlogs(blogs.filter((blog) => blog._id !== id))
     setShowDeleteDialog(false)
   }
 
-  const handleShare = (id: string) => {
-    // Implement share functionality
-    console.log('Share blog:', id);
-  }
+  // const handleShare = (id: string) => {
+  //   // Implement share functionality
+  //   console.log('Share blog:', id);
+  // }
 
   return (
     <DashboardLayout>
@@ -111,9 +111,9 @@ export default function BlogsPage() {
                         <DropdownMenuItem onSelect={() => handleDelete(blog._id)}>
                           Delete
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleShare(blog._id)}>
+                        {/* <DropdownMenuItem onSelect={() => handleShare(blog._id)}>
                           Share
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

@@ -151,7 +151,7 @@ export default function EligibilityApplicationsPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg">{application.applicantName}</CardTitle>
+                      {/* <CardTitle className="text-lg">{application.applicantName}</CardTitle> */}
                       <p className="text-sm text-muted-foreground">
                         Submitted on: {new Date(application.createdAt).toLocaleDateString()}
                       </p>
