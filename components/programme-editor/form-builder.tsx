@@ -118,16 +118,12 @@ const PREDEFINED_FIELDS = {
 
 export function FormBuilder({ form, onChange }: FormBuilderProps) {
   // Ensure form and sections always have a default value
-  const safeForm = form || { 
-    sections: [{ 
-      id: nanoid(), 
-      title: 'Personal Information', 
-      description: 'Please provide your personal details',
-      fields: [] 
-    }],
-    settings: {
+  const safeForm = {
+    sections: form.sections || [],
+    settings: form.settings || {
       submitButtonText: 'Submit',
-      successMessage: 'Form submitted successfully'
+      successMessage: 'Form submitted successfully',
+      enableEmailNotifications: false
     }
   };
 
@@ -346,7 +342,7 @@ export function FormBuilder({ form, onChange }: FormBuilderProps) {
             <div className="flex justify-between items-center gap-2">
               <div className='w-full'>
                 <Input
-                  value={section.title}
+                  value={section.title || ''}
                   onChange={(e) => updateSection(section.id, { title: e.target.value })}
                   placeholder="Section Title"
                   className="font-semibold text-lg"

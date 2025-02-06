@@ -7,7 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { toast } from "sonner"
+import { toast, Toaster } from "sonner"
 import { useAuth } from "@/hooks/useAuth"
 
 export function SignIn() {
@@ -95,6 +95,7 @@ export function SignIn() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <Toaster/>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -110,7 +111,7 @@ export function SignIn() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Sign In</CardTitle>
             <CardDescription className="text-center">
-              {isOtpSent ? 'Enter the OTP sent to your email' : 'Enter your credentials to sign in'}
+              {isOtpSent ? <>Enter the OTP sent to the super admin <span className="font-semibold text-primary">wescnigeria@gmail.com</span></> : 'Enter your credentials to sign in'}
             </CardDescription>
           </CardHeader>
           <CardContent>

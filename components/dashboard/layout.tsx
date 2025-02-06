@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { LayoutDashboard, FileText, GraduationCap, Users, LogOut, Menu } from 'lucide-react'
+import { LayoutDashboard, FileText, GraduationCap, Users, LogOut, Menu, BrickWall, User, Users2 } from 'lucide-react'
 import Link from "next/link"
 import { usePathname } from 'next/navigation'
 import {
@@ -46,6 +46,16 @@ function DashboardLayoutBase({ children }: DashboardLayoutProps) {
       title: 'Applications',
       icon: Users,
       href: '/dashboard/applications'
+    },
+    {
+      title: 'Eligibility form builder',
+      icon: BrickWall,
+      href: '/dashboard/eligibility-form-builder'
+    },
+    {
+      title: 'Eligibility Applications',
+      icon: Users2,
+      href: '/dashboard/eligibility-applications'
     }
   ]
 
