@@ -1,28 +1,28 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Badge } from '@/components/ui/badge'
+import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
 import { DashboardLayout } from "@/components/dashboard/layout"
 import { Loader2 } from "lucide-react"
+import { extractApplicantName } from "@/lib/utils/name-extractor"
 
 interface Application {
-  _id: string;
-  applicantName: string;
-  createdAt: string;
-  formData: Record<string, any>;
+  _id: string
+  applicantName: string
+  createdAt: string
+  formData: Record<string, any>
   programmeId?: {
-    _id: string;
-    title: string;
-  };
-  seen: Boolean
+    _id: string
+    title: string
+  }
+  seen: boolean
 }
-
 
 interface GroupedApplications {
   [programmeId: string]: {
@@ -40,7 +40,9 @@ const FormDataViewer = ({ data }: { data: Record<string, any> }) => {
           <div className="mt-1">
             {Array.isArray(value) ? (
               value.map((item, index) => (
-                <div key={index} className="text-sm">{item}</div>
+                <div key={index} className="text-sm">
+                  {item}
+                </div>
               ))
             ) : (
               <div className="text-sm">{String(value)}</div>
@@ -49,8 +51,8 @@ const FormDataViewer = ({ data }: { data: Record<string, any> }) => {
         </div>
       ))}
     </div>
-  );
-};
+  )
+}
 
 export default function ApplicationsPage() {
   const [groupedApplications, setGroupedApplications] = useState<GroupedApplications>({})
@@ -61,43 +63,44 @@ export default function ApplicationsPage() {
 
   const fetchApplications = async () => {
     try {
-      setIsLoading(true);
-      const response = await fetch('/api/applications');
+      setIsLoading(true)
+      const response = await fetch("/api/applications")
       if (!response.ok) {
-        throw new Error('Failed to fetch applications');
+        throw new Error("Failed to fetch applications")
       }
-      const applications: Application[] = await response.json();
+      const applications: Application[] = await response.json()
 
-      console.log('Fetched Applications:', applications); // Debugging output
+      console.log("Fetched Applications:", applications) // Debugging output
 
       const grouped = applications.reduce((acc, app) => {
         if (!app.programmeId || !app.programmeId._id) {
-          console.warn('Skipping application with missing programmeId:', app);
-          return acc;
+          console.warn("Skipping application with missing programmeId:", app)
+          return acc
         }
         if (!acc[app.programmeId._id]) {
           acc[app.programmeId._id] = {
-            programmeTitle: app.programmeId.title || 'Unknown Programme',
-            applications: []
-          };
+            programmeTitle: app.programmeId.title || "Unknown Programme",
+            applications: [],
+          }
         }
-        acc[app.programmeId._id].applications.push(app);
-        return acc;
-      }, {} as GroupedApplications);
+        acc[app.programmeId._id].applications.push(app)
+        return acc
+      }, {} as GroupedApplications)
 
-      console.log('Grouped Applications:', grouped); // Debugging output
-      setGroupedApplications(grouped);
+      console.log("Grouped Applications:", grouped) // Debugging output
+      setGroupedApplications(grouped)
     } catch (error) {
-      console.error('Error fetching applications:', error);
+      console.error("Error fetching applications:", error)
       toast({
-        title: 'Failed to load applications',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+        title: "Failed to load applications",
+        description: "Please try again later.",
+        variant: "destructive",
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
+
   useEffect(() => {
     fetchApplications()
   }, [])
@@ -110,52 +113,52 @@ export default function ApplicationsPage() {
   const handleMarkAsSeen = async (applicationId: string) => {
     try {
       const response = await fetch(`/api/applications/${applicationId}/seen`, {
-        method: 'PATCH',
-      });
-  
+        method: "PATCH",
+      })
+
       if (!response.ok) {
-        throw new Error('Failed to mark application as seen');
+        throw new Error("Failed to mark application as seen")
       }
-  
+
       // Refresh the applications list
-      fetchApplications();
+      fetchApplications()
       toast({
-        title: 'Application marked as seen',
-        variant: 'default',
-      });
+        title: "Application marked as seen",
+        variant: "default",
+      })
     } catch (error) {
-      console.error('Error marking application as seen:', error);
+      console.error("Error marking application as seen:", error)
       toast({
-        title: 'Failed to mark application as seen',
-        variant: 'destructive',
-      });
+        title: "Failed to mark application as seen",
+        variant: "destructive",
+      })
     }
-  };
-  
+  }
+
   const handleDeleteApplication = async (applicationId: string) => {
     try {
       const response = await fetch(`/api/applications/${applicationId}`, {
-        method: 'DELETE',
-      });
-  
+        method: "DELETE",
+      })
+
       if (!response.ok) {
-        throw new Error('Failed to delete application');
+        throw new Error("Failed to delete application")
       }
-  
+
       // Refresh the applications list
-      fetchApplications();
+      fetchApplications()
       toast({
-        title: 'Application deleted successfully',
-        variant: 'default',
-      });
+        title: "Application deleted successfully",
+        variant: "default",
+      })
     } catch (error) {
-      console.error('Error deleting application:', error);
+      console.error("Error deleting application:", error)
       toast({
-        title: 'Failed to delete application',
-        variant: 'destructive',
-      });
+        title: "Failed to delete application",
+        variant: "destructive",
+      })
     }
-  };
+  }
 
   if (isLoading) {
     return (
@@ -185,53 +188,47 @@ export default function ApplicationsPage() {
                   <div className="flex items-center justify-between w-full pr-4">
                     <span>{programmeTitle}</span>
                     <span className="text-sm text-muted-foreground bg-secondary px-2 py-1 rounded-full">
-                      {applications.length} application{applications.length !== 1 ? 's' : ''}
+                      {applications.length} application{applications.length !== 1 ? "s" : ""}
                     </span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="grid gap-4">
-                    {applications.map((application) => (
-                      <Card key={application._id} className="hover:bg-secondary/10 transition-colors">
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <CardTitle className="text-lg">{application.applicantName}</CardTitle>
-                              <p className="text-sm text-muted-foreground">
-                                Submitted on: {new Date(application.createdAt).toLocaleDateString()}
-                              </p>
-                              {application.seen && (
-                                <Badge variant="outline" className="mt-1">
-                                  Seen
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                onClick={() => handleViewApplication(application)}
-                                variant="outline"
-                              >
-                                View Details
-                              </Button>
-                              {!application.seen && (
-                                <Button
-                                  onClick={() => handleMarkAsSeen(application._id)}
-                                  variant="outline"
-                                >
-                                  Mark as Seen
+                    {applications.map((application) => {
+                      const displayName = extractApplicantName(application.formData)
+                      return (
+                        <Card key={application._id} className="hover:bg-secondary/10 transition-colors">
+                          <CardHeader>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <CardTitle className="text-lg">{displayName}</CardTitle>
+                                <p className="text-sm text-muted-foreground">
+                                  Submitted on: {new Date(application.createdAt).toLocaleDateString()}
+                                </p>
+                                {application.seen && (
+                                  <Badge variant="outline" className="mt-1">
+                                    Seen
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Button onClick={() => handleViewApplication(application)} variant="outline">
+                                  View Details
                                 </Button>
-                              )}
-                              <Button
-                                onClick={() => handleDeleteApplication(application._id)}
-                                variant="destructive"
-                              >
-                                Delete
-                              </Button>
+                                {!application.seen && (
+                                  <Button onClick={() => handleMarkAsSeen(application._id)} variant="outline">
+                                    Mark as Seen
+                                  </Button>
+                                )}
+                                <Button onClick={() => handleDeleteApplication(application._id)} variant="destructive">
+                                  Delete
+                                </Button>
+                              </div>
                             </div>
-                          </div>
-                        </CardHeader>
-                      </Card>
-                    ))}
+                          </CardHeader>
+                        </Card>
+                      )
+                    })}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -249,6 +246,9 @@ export default function ApplicationsPage() {
                 <div className="grid gap-4">
                   <div>
                     <h3 className="text-lg font-semibold">Applicant Information</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Name: {extractApplicantName(selectedApplication.formData)}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       Submitted on: {new Date(selectedApplication.createdAt).toLocaleDateString()}
                     </p>

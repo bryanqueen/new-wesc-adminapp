@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
 import { DashboardLayout } from "@/components/dashboard/layout"
 import { Loader2 } from "lucide-react"
+import { extractApplicantName } from "@/lib/utils/name-extractor"
 
 interface EligibilityApplication {
   _id: string
@@ -146,38 +147,41 @@ export default function EligibilityApplicationsPage() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {applications.map((application) => (
-              <Card key={application._id} className="hover:bg-secondary/10 transition-colors">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      {/* <CardTitle className="text-lg">{application.applicantName}</CardTitle> */}
-                      <p className="text-sm text-muted-foreground">
-                        Submitted on: {new Date(application.createdAt).toLocaleDateString()}
-                      </p>
-                      {application.seen && (
-                        <Badge variant="outline" className="mt-1">
-                          Seen
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button onClick={() => handleViewApplication(application)} variant="outline">
-                        View Details
-                      </Button>
-                      {!application.seen && (
-                        <Button onClick={() => handleMarkAsSeen(application._id)} variant="outline">
-                          Mark as Seen
+            {applications.map((application) => {
+              const displayName = extractApplicantName(application.formData)
+              return (
+                <Card key={application._id} className="hover:bg-secondary/10 transition-colors">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{displayName}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Submitted on: {new Date(application.createdAt).toLocaleDateString()}
+                        </p>
+                        {application.seen && (
+                          <Badge variant="outline" className="mt-1">
+                            Seen
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button onClick={() => handleViewApplication(application)} variant="outline">
+                          View Details
                         </Button>
-                      )}
-                      <Button onClick={() => handleDeleteApplication(application._id)} variant="destructive">
-                        Delete
-                      </Button>
+                        {!application.seen && (
+                          <Button onClick={() => handleMarkAsSeen(application._id)} variant="outline">
+                            Mark as Seen
+                          </Button>
+                        )}
+                        <Button onClick={() => handleDeleteApplication(application._id)} variant="destructive">
+                          Delete
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
+                  </CardHeader>
+                </Card>
+              )
+            })}
           </div>
         )}
 
@@ -191,6 +195,9 @@ export default function EligibilityApplicationsPage() {
                 <div className="grid gap-4">
                   <div>
                     <h3 className="text-lg font-semibold">Applicant Information</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Name: {extractApplicantName(selectedApplication.formData)}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       Submitted on: {new Date(selectedApplication.createdAt).toLocaleDateString()}
                     </p>
@@ -207,4 +214,3 @@ export default function EligibilityApplicationsPage() {
     </DashboardLayout>
   )
 }
-
