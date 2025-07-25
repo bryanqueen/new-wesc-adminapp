@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
 import { DashboardLayout } from "@/components/dashboard/layout"
-import { Loader2 } from "lucide-react"
+import { Loader2, Search, X } from "lucide-react"
 import { extractApplicantName } from "@/lib/utils/name-extractor"
+import { searchApplications, type SearchableApplication } from "@/lib/utils/search-utils"
 
 interface EligibilityApplication {
   _id: string
@@ -41,11 +43,62 @@ const FormDataViewer = ({ data }: { data: Record<string, any> }) => {
   )
 }
 
+const SearchResultCard = ({
+  application,
+  onViewDetails,
+  onMarkAsSeen,
+  onDelete,
+}: {
+  application: EligibilityApplication
+  onViewDetails: (app: EligibilityApplication) => void
+  onMarkAsSeen: (id: string) => void
+  onDelete: (id: string) => void
+}) => {
+  const displayName = extractApplicantName(application.formData)
+
+  return (
+    <Card className="hover:bg-secondary/10 transition-colors">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg">{displayName}</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Submitted on: {new Date(application.createdAt).toLocaleDateString()}
+            </p>
+            {application.seen && (
+              <Badge variant="outline" className="mt-1">
+                Seen
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button onClick={() => onViewDetails(application)} variant="outline" size="sm">
+              View Details
+            </Button>
+            {!application.seen && (
+              <Button onClick={() => onMarkAsSeen(application._id)} variant="outline" size="sm">
+                Mark as Seen
+              </Button>
+            )}
+            <Button onClick={() => onDelete(application._id)} variant="destructive" size="sm">
+              Delete
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  )
+}
+
 export default function EligibilityApplicationsPage() {
   const [applications, setApplications] = useState<EligibilityApplication[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedApplication, setSelectedApplication] = useState<EligibilityApplication | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [searchResults, setSearchResults] = useState<EligibilityApplication[]>([])
+  const [isSearching, setIsSearching] = useState(false)
 
   const fetchApplications = async () => {
     try {
@@ -71,6 +124,20 @@ export default function EligibilityApplicationsPage() {
   useEffect(() => {
     fetchApplications()
   }, [])
+
+  // Handle search
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setSearchResults([])
+      setIsSearching(false)
+      return
+    }
+
+    setIsSearching(true)
+    const results = searchApplications(applications as SearchableApplication[], searchTerm)
+    setSearchResults(results as EligibilityApplication[])
+    setIsSearching(false)
+  }, [searchTerm, applications])
 
   const handleViewApplication = (application: EligibilityApplication) => {
     setSelectedApplication(application)
@@ -125,6 +192,12 @@ export default function EligibilityApplicationsPage() {
     }
   }
 
+  const handleSearchClose = () => {
+    setIsSearchOpen(false)
+    setSearchTerm("")
+    setSearchResults([])
+  }
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -138,7 +211,14 @@ export default function EligibilityApplicationsPage() {
   return (
     <DashboardLayout>
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Eligibility Applications</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">Eligibility Applications</h1>
+          <Button onClick={() => setIsSearchOpen(true)} variant="outline" size="sm">
+            <Search className="h-4 w-4 mr-2" />
+            Search Applications
+          </Button>
+        </div>
+
         {applications.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
@@ -185,6 +265,61 @@ export default function EligibilityApplicationsPage() {
           </div>
         )}
 
+        {/* Search Dialog */}
+        <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <DialogTitle>Search Eligibility Applications</DialogTitle>
+                {/* <Button variant="ghost" size="sm" onClick={handleSearchClose}>
+                  <X className="h-4 w-4" />
+                </Button> */}
+              </div>
+            </DialogHeader>
+            <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+              <div className="flex items-center space-x-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by applicant name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {isSearching ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : searchTerm.trim() && searchResults.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">No applications found for "{searchTerm}"</div>
+                ) : searchResults.length > 0 ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Found {searchResults.length} application{searchResults.length !== 1 ? "s" : ""} matching "
+                      {searchTerm}"
+                    </p>
+                    {searchResults.map((application) => (
+                      <SearchResultCard
+                        key={application._id}
+                        application={application}
+                        onViewDetails={handleViewApplication}
+                        onMarkAsSeen={handleMarkAsSeen}
+                        onDelete={handleDeleteApplication}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Start typing to search by applicant name...
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Details Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
